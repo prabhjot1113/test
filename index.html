@@ -1,0 +1,1029 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GNDEC Campus Canteen - Online Ordering</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons CDN -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Google Fonts: Inter -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            gndec: {
+              navy: '#002147',
+              navyDark: '#001630',
+              gold: '#DAA520',
+              goldHover: '#B8860B',
+              lightBg: '#F8FAFC',
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f1f1f1;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+    .badge-veg {
+      border: 2px solid #16a34a;
+    }
+    .badge-veg-inner {
+      background-color: #16a34a;
+    }
+    .badge-nonveg {
+      border: 2px solid #dc2626;
+    }
+    .badge-nonveg-inner {
+      background-color: #dc2626;
+    }
+  </style>
+</head>
+<body class="bg-gndec-lightBg text-slate-800 font-sans min-h-screen flex flex-col antialiased">
+
+  <!-- ================= TOP ANNOUNCEMENT BAR ================= -->
+  <div class="bg-gndec-navyDark text-gndec-gold text-xs py-1.5 px-4 text-center font-medium tracking-wide flex justify-between items-center px-4 md:px-8">
+    <div class="hidden sm:block">📍 Guru Nanak Dev Engineering College, Ludhiana</div>
+    <div class="mx-auto sm:mx-0">⚡ Express Campus Pickups • Fresh & Hygienic Meal Counter</div>
+    <div class="hidden md:block">🕒 Canteen Hours: 8:00 AM - 6:00 PM</div>
+  </div>
+
+  <!-- ================= HEADER & NAV ================= -->
+  <header class="bg-gndec-navy text-white sticky top-0 z-30 shadow-md border-b-2 border-gndec-gold">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-20 gap-4">
+        
+        <!-- Logo & Title -->
+        <div class="flex items-center gap-3 cursor-pointer" onclick="filterCategory('all')">
+          <div class="bg-white p-2 rounded-full shadow-inner border border-gndec-gold">
+            <svg class="w-8 h-8 text-gndec-navy" fill="currentColor" viewBox="0 0 24 24">
+              <!-- Crest / College Icon Graphic -->
+              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+            </svg>
+          </div>
+          <div>
+            <h1 class="font-extrabold text-lg sm:text-xl tracking-tight text-white flex items-center gap-2">
+              GNDEC <span class="text-gndec-gold font-normal text-sm sm:text-base border-l border-slate-600 pl-2">CANTEEN</span>
+            </h1>
+            <p class="text-xs text-slate-300 font-light hidden sm:block">Campus Food Express & Token System</p>
+          </div>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="flex-1 max-w-md mx-2 sm:mx-4">
+          <div class="relative">
+            <input 
+              type="text" 
+              id="searchInput" 
+              placeholder="Search Samosa, Thali, Coffee..." 
+              oninput="handleSearch()" 
+              class="w-full bg-slate-800/80 text-white placeholder-slate-400 pl-10 pr-4 py-2 rounded-full border border-slate-600 text-sm focus:outline-none focus:border-gndec-gold focus:ring-1 focus:ring-gndec-gold transition-all"
+            />
+            <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-2.5 text-slate-400 text-sm"></i>
+            <button id="clearSearch" onclick="clearSearchInput()" class="hidden absolute right-3 top-2.5 text-slate-400 hover:text-white text-xs">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Right Controls: Active Order Tracker & Cart -->
+        <div class="flex items-center gap-3">
+          <!-- Active Order Quick View Button (Hidden by default) -->
+          <button id="activeOrderBtn" onclick="openOrderStatusModal()" class="hidden bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-2 rounded-lg text-xs font-semibold flex items-center gap-2 animate-pulse shadow-md transition-all">
+            <i class="fa-solid fa-spinner fa-spin"></i>
+            <span class="hidden md:inline">Live Order</span> #<span id="activeTokenDisplay">--</span>
+          </button>
+
+          <!-- Cart Button -->
+          <button onclick="toggleCartModal(true)" class="bg-gndec-gold hover:bg-gndec-goldHover text-gndec-navy font-bold px-4 py-2 rounded-full flex items-center gap-2 shadow-lg transition-all hover:scale-105 active:scale-95 text-sm">
+            <div class="relative">
+              <i class="fa-solid fa-cart-shopping text-base"></i>
+              <span id="cartBadge" class="absolute -top-2 -right-2 bg-red-600 text-white text-[10px] font-extrabold w-4 h-4 rounded-full flex items-center justify-center border border-white hidden">0</span>
+            </div>
+            <span class="hidden sm:inline">Cart</span>
+            <span id="cartHeaderTotal" class="text-xs bg-gndec-navy/20 px-2 py-0.5 rounded-full font-extrabold">₹0</span>
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </header>
+
+  <!-- ================= HERO & ANNOUNCEMENT BANNER ================= -->
+  <section class="bg-gradient-to-r from-gndec-navy via-slate-900 to-gndec-navy text-white py-6 border-b border-slate-700">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-4">
+      <div>
+        <span class="bg-gndec-gold/20 text-gndec-gold text-xs font-semibold px-2.5 py-1 rounded-md border border-gndec-gold/40 uppercase tracking-wider">Fast-Track Counter Tokens</span>
+        <h2 class="text-xl sm:text-2xl font-bold mt-2">Skip the Line at the Main Canteen! 🍲</h2>
+        <p class="text-slate-300 text-xs sm:text-sm mt-1">Order ahead from your lecture hall, collect using your unique digital token number.</p>
+      </div>
+      <div class="flex items-center gap-3 bg-slate-800/80 p-3 rounded-xl border border-slate-700 text-xs">
+        <i class="fa-solid fa-clock-rotate-left text-gndec-gold text-xl"></i>
+        <div>
+          <p class="font-semibold text-slate-200">Avg Preparation Time</p>
+          <p class="text-emerald-400 font-bold">8 - 12 Minutes</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= MAIN CONTENT ================= -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-grow w-full">
+
+    <!-- Categories Filters Tab Bar -->
+    <div class="mb-8">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="text-lg font-bold text-gndec-navy flex items-center gap-2">
+          <i class="fa-solid fa-utensils text-gndec-gold"></i> Menu Categories
+        </h3>
+        <span id="itemCountDisplay" class="text-xs font-medium text-slate-500">Showing all items</span>
+      </div>
+      
+      <div class="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none scroll-smooth" id="categoryTabs">
+        <!-- Dynamic Tabs Rendered Here -->
+      </div>
+    </div>
+
+    <!-- Menu Items Grid -->
+    <div id="menuGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+      <!-- Menu Item Cards Rendered Here -->
+    </div>
+
+    <!-- Empty State Warning -->
+    <div id="emptyMenuState" class="hidden text-center py-16 bg-white rounded-2xl border border-slate-200 shadow-sm">
+      <div class="w-16 h-16 bg-slate-100 text-slate-400 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
+        <i class="fa-solid fa-bowl-rice"></i>
+      </div>
+      <h3 class="text-lg font-bold text-slate-700">No delicious items found</h3>
+      <p class="text-slate-500 text-sm mt-1">Try adjusting your search query or selected category filter.</p>
+      <button onclick="resetFilters()" class="mt-4 px-4 py-2 bg-gndec-navy text-white text-xs font-bold rounded-lg hover:bg-gndec-navyDark transition-colors">
+        Reset Filters
+      </button>
+    </div>
+
+  </main>
+
+  <!-- ================= FOOTER ================= -->
+  <footer class="bg-gndec-navy text-white mt-12 border-t-4 border-gndec-gold">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8 text-sm">
+        <div>
+          <div class="flex items-center gap-2 font-bold text-lg text-gndec-gold mb-3">
+            <i class="fa-solid fa-graduation-cap"></i> GNDEC Ludhiana
+          </div>
+          <p class="text-slate-300 text-xs leading-relaxed">
+            Guru Nanak Dev Engineering College Campus Food Ordering Portal. Designed to reduce canteen queue delays for students, faculty & guests.
+          </p>
+        </div>
+        <div>
+          <h4 class="font-bold text-white mb-3 uppercase tracking-wider text-xs border-b border-slate-700 pb-1 inline-block">Canteen Outlets</h4>
+          <ul class="space-y-2 text-xs text-slate-300">
+            <li class="flex items-center gap-2"><i class="fa-solid fa-circle text-[6px] text-gndec-gold"></i> Central Main Canteen</li>
+            <li class="flex items-center gap-2"><i class="fa-solid fa-circle text-[6px] text-gndec-gold"></i> IT Block Express Kiosk</li>
+            <li class="flex items-center gap-2"><i class="fa-solid fa-circle text-[6px] text-gndec-gold"></i> PG Block Nescafe & Bakery Cafe</li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="font-bold text-white mb-3 uppercase tracking-wider text-xs border-b border-slate-700 pb-1 inline-block">Help & Support</h4>
+          <p class="text-xs text-slate-300 mb-2"><i class="fa-solid fa-envelope text-gndec-gold mr-2"></i> canteen-help@gndec.ac.in</p>
+          <p class="text-xs text-slate-300 mb-2"><i class="fa-solid fa-phone text-gndec-gold mr-2"></i> +91 161 2502700 (Ext. 404)</p>
+          <p class="text-[11px] text-slate-400 mt-4">© GNDEC Ludhiana. Demo Canteen Portal.</p>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ================= CART SIDEBAR / MODAL ================= -->
+  <div id="cartDrawer" class="fixed inset-0 z-50 overflow-hidden hidden" aria-labelledby="slide-over-title" role="dialog" aria-modal="true">
+    <!-- Backdrop overlay -->
+    <div onclick="toggleCartModal(false)" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity"></div>
+
+    <div class="fixed inset-y-0 right-0 pl-10 max-w-full flex">
+      <div class="w-screen max-w-md bg-white shadow-2xl flex flex-col justify-between">
+        
+        <!-- Cart Header -->
+        <div class="p-4 sm:p-6 bg-gndec-navy text-white flex items-center justify-between border-b border-gndec-gold">
+          <div class="flex items-center gap-2">
+            <i class="fa-solid fa-bag-shopping text-gndec-gold text-xl"></i>
+            <h2 class="text-lg font-bold">Your Order Cart</h2>
+            <span id="cartItemCountBadge" class="bg-gndec-gold text-gndec-navy text-xs font-bold px-2 py-0.5 rounded-full">0 items</span>
+          </div>
+          <button onclick="toggleCartModal(false)" class="text-slate-300 hover:text-white p-1 rounded-lg">
+            <i class="fa-solid fa-xmark text-xl"></i>
+          </button>
+        </div>
+
+        <!-- Cart Items List Container -->
+        <div class="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4" id="cartItemsList">
+          <!-- Dynamically Populated Cart Items -->
+        </div>
+
+        <!-- Empty Cart Notice (Shown if cart is empty) -->
+        <div id="emptyCartView" class="hidden flex-1 flex flex-col items-center justify-center p-6 text-center">
+          <div class="w-20 h-20 bg-slate-100 text-slate-400 rounded-full flex items-center justify-center mb-4 text-3xl">
+            <i class="fa-solid fa-basket-shopping"></i>
+          </div>
+          <h4 class="font-bold text-slate-700 text-base">Your Cart is Empty</h4>
+          <p class="text-xs text-slate-500 mt-1 max-w-xs">Looks like you haven't added any items to your order yet.</p>
+          <button onclick="toggleCartModal(false)" class="mt-4 px-4 py-2 bg-gndec-navy text-white text-xs font-bold rounded-lg hover:bg-gndec-navyDark">
+            Browse Canteen Menu
+          </button>
+        </div>
+
+        <!-- Cart Summary & Pickup Details Footer -->
+        <div id="cartFooter" class="p-4 sm:p-6 bg-slate-50 border-t border-slate-200 space-y-4">
+          
+          <!-- Pickup Location Dropdown -->
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">
+              <i class="fa-solid fa-location-dot text-gndec-navy mr-1"></i> Pickup Location Counter:
+            </label>
+            <select id="pickupCounter" class="w-full bg-white border border-slate-300 rounded-lg p-2 text-xs font-semibold text-slate-700 focus:ring-1 focus:ring-gndec-navy focus:outline-none">
+              <option value="Main Canteen Counter #1">Main Canteen - Ground Floor (Counter 1)</option>
+              <option value="IT Block Kiosk">IT Block Express Kiosk (Near Auditorium)</option>
+              <option value="PG Block Cafe">PG Block Nescafe & Bakery Corner</option>
+            </select>
+          </div>
+
+          <!-- Pickup Time Slot -->
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">
+              <i class="fa-solid fa-clock text-gndec-navy mr-1"></i> Pickup Time Slot:
+            </label>
+            <select id="pickupTimeSlot" class="w-full bg-white border border-slate-300 rounded-lg p-2 text-xs font-semibold text-slate-700 focus:ring-1 focus:ring-gndec-navy focus:outline-none">
+              <option value="ASAP (10-12 mins)">ASAP (Ready in ~10 mins)</option>
+              <option value="Break 1 (11:15 AM)">Next Recess Break (11:15 AM)</option>
+              <option value="Lunch Break (01:15 PM)">Lunch Recess (01:15 PM)</option>
+              <option value="Evening Break (03:30 PM)">Evening Tea Break (03:30 PM)</option>
+            </select>
+          </div>
+
+          <!-- Calculation Summary -->
+          <div class="space-y-1.5 text-xs text-slate-600 border-t border-slate-200 pt-3">
+            <div class="flex justify-between">
+              <span>Item Subtotal</span>
+              <span id="summarySubtotal" class="font-semibold text-slate-800">₹0</span>
+            </div>
+            <div class="flex justify-between">
+              <span>Campus Digital Maintenance / GST (5%)</span>
+              <span id="summaryTax" class="font-semibold text-slate-800">₹0</span>
+            </div>
+            <div class="flex justify-between font-bold text-sm text-gndec-navy pt-2 border-t border-slate-200">
+              <span>Total Amount Payable</span>
+              <span id="summaryGrandTotal" class="text-base text-gndec-navy font-extrabold">₹0</span>
+            </div>
+          </div>
+
+          <!-- Action Button -->
+          <button onclick="placeOrder()" class="w-full bg-gndec-gold hover:bg-gndec-goldHover text-gndec-navy font-extrabold py-3 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 text-sm uppercase tracking-wider">
+            <i class="fa-solid fa-bolt"></i> Confirm & Generate Token
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= ITEM CUSTOMIZATION MODAL ================= -->
+  <div id="customModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm hidden">
+    <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl relative border border-slate-100 animate-in fade-in zoom-in duration-200">
+      <button onclick="closeCustomModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
+        <i class="fa-solid fa-xmark text-lg"></i>
+      </button>
+
+      <h3 id="modalItemTitle" class="text-lg font-bold text-gndec-navy mb-1">Customize Item</h3>
+      <p id="modalItemSubtitle" class="text-xs text-slate-500 mb-4">Select options according to your preference</p>
+
+      <div class="space-y-4 text-xs">
+        <!-- Spiciness / Addon Options -->
+        <div>
+          <label class="font-bold text-slate-700 block mb-2">Spice Level / Sauce:</label>
+          <div class="space-y-1.5">
+            <label class="flex items-center gap-2 p-2 rounded-lg border border-slate-200 hover:bg-slate-50 cursor-pointer">
+              <input type="radio" name="spiceOption" value="Regular / Standard" checked class="text-gndec-navy focus:ring-gndec-navy">
+              <span class="text-slate-700 font-medium">Standard / Regular</span>
+            </label>
+            <label class="flex items-center gap-2 p-2 rounded-lg border border-slate-200 hover:bg-slate-50 cursor-pointer">
+              <input type="radio" name="spiceOption" value="Extra Spicy + Mint Chutney" class="text-gndec-navy focus:ring-gndec-navy">
+              <span class="text-slate-700 font-medium">Extra Spicy + Green Mint Chutney</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Addons -->
+        <div>
+          <label class="font-bold text-slate-700 block mb-2">Optional Extras:</label>
+          <div class="space-y-1.5">
+            <label class="flex items-center justify-between p-2 rounded-lg border border-slate-200 hover:bg-slate-50 cursor-pointer">
+              <div class="flex items-center gap-2">
+                <input type="checkbox" id="extraCheeseCheck" class="rounded text-gndec-navy focus:ring-gndec-navy">
+                <span class="text-slate-700 font-medium">Extra Cheese Slice</span>
+              </div>
+              <span class="text-slate-500 font-semibold">+₹15</span>
+            </label>
+            <label class="flex items-center justify-between p-2 rounded-lg border border-slate-200 hover:bg-slate-50 cursor-pointer">
+              <div class="flex items-center gap-2">
+                <input type="checkbox" id="extraButterCheck" class="rounded text-gndec-navy focus:ring-gndec-navy">
+                <span class="text-slate-700 font-medium">Extra Amul Butter</span>
+              </div>
+              <span class="text-slate-500 font-semibold">+₹10</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Special Notes -->
+        <div>
+          <label class="font-bold text-slate-700 block mb-1">Special Instruction (Optional):</label>
+          <input type="text" id="modalCustomNote" placeholder="e.g. Less oil, packaging separate" class="w-full border border-slate-300 rounded-lg p-2 text-xs focus:ring-1 focus:ring-gndec-navy focus:outline-none">
+        </div>
+      </div>
+
+      <button id="modalAddBtn" class="w-full mt-6 bg-gndec-navy hover:bg-gndec-navyDark text-white font-bold py-2.5 rounded-xl shadow transition-all text-xs">
+        Add Customized Item to Cart
+      </button>
+    </div>
+  </div>
+
+  <!-- ================= LIVE ORDER STATUS TRACKER MODAL ================= -->
+  <div id="orderStatusModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm hidden">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl relative border border-gndec-gold text-center">
+      
+      <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-3 text-3xl animate-bounce">
+        <i class="fa-solid fa-circle-check"></i>
+      </div>
+
+      <span class="bg-gndec-navy/10 text-gndec-navy text-xs font-bold px-3 py-1 rounded-full border border-gndec-navy/20">
+        Order Placed Successfully!
+      </span>
+
+      <h3 class="text-2xl font-extrabold text-gndec-navy mt-3">Token No: <span id="tokenNumberDisplay" class="text-gndec-gold">#--</span></h3>
+      <p class="text-xs text-slate-500 mt-1">Show this digital token number at the canteen pickup counter.</p>
+
+      <!-- Counter details summary card -->
+      <div class="bg-slate-50 rounded-xl p-3 my-4 text-left border border-slate-200 text-xs space-y-1">
+        <div class="flex justify-between text-slate-600">
+          <span>Pickup Location:</span>
+          <span id="trackerLocation" class="font-bold text-slate-800">--</span>
+        </div>
+        <div class="flex justify-between text-slate-600">
+          <span>Selected Slot:</span>
+          <span id="trackerTimeSlot" class="font-bold text-slate-800">--</span>
+        </div>
+        <div class="flex justify-between text-slate-600">
+          <span>Total Paid:</span>
+          <span id="trackerAmount" class="font-bold text-emerald-600">--</span>
+        </div>
+      </div>
+
+      <!-- Live Order Preparation Progress Bar -->
+      <div class="my-6 text-left">
+        <div class="flex justify-between items-center mb-1 text-xs">
+          <span class="font-bold text-slate-700" id="statusStageTitle">Order Sent to Kitchen</span>
+          <span class="text-emerald-600 font-extrabold" id="statusETA">Est: 8 mins</span>
+        </div>
+        
+        <!-- Progress Bar Track -->
+        <div class="w-full bg-slate-200 h-2.5 rounded-full overflow-hidden">
+          <div id="orderProgressBar" class="bg-gradient-to-r from-gndec-gold to-emerald-500 h-full w-1/4 transition-all duration-1000"></div>
+        </div>
+
+        <div class="grid grid-cols-3 text-[10px] text-slate-400 font-semibold mt-2 text-center">
+          <div class="text-gndec-navy font-bold">1. Received</div>
+          <div>2. Preparing</div>
+          <div>3. Ready for Pickup</div>
+        </div>
+      </div>
+
+      <div class="flex gap-2">
+        <button onclick="closeOrderStatusModal()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2.5 rounded-xl text-xs transition-colors">
+          Close Window
+        </button>
+        <button onclick="simulateOrderProgress()" class="flex-1 bg-gndec-navy hover:bg-gndec-navyDark text-white font-bold py-2.5 rounded-xl text-xs transition-colors shadow">
+          <i class="fa-solid fa-arrows-rotate mr-1"></i> Simulate Prep Step
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ================= NOTIFICATION TOAST ================= -->
+  <div id="toast" class="fixed bottom-5 right-5 z-50 bg-gndec-navy text-white text-xs font-semibold px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 transition-all duration-300 transform translate-y-20 opacity-0 border border-gndec-gold">
+    <i class="fa-solid fa-circle-info text-gndec-gold text-base" id="toastIcon"></i>
+    <span id="toastMsg">Notification message</span>
+  </div>
+
+  <!-- ================= JAVASCRIPT LOGIC ================= -->
+  <script>
+    // Menu Data Array for GNDEC Canteen
+    const menuItems = [
+      {
+        id: 1,
+        name: "Amul Butter Special Paratha (2 Pcs)",
+        category: "north-indian",
+        price: 70,
+        rating: 4.8,
+        reviews: 142,
+        isVeg: true,
+        image: "https://images.unsplash.com/photo-1626777552726-4a6b54c97e46?w=500&auto=format&fit=crop&q=60",
+        description: "Served hot with curd, pickle, and butter slab.",
+        customizable: true
+      },
+      {
+        id: 2,
+        name: "Paneer Butter Masala Thali",
+        category: "north-indian",
+        price: 120,
+        rating: 4.9,
+        reviews: 210,
+        isVeg: true,
+        image: "https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=500&auto=format&fit=crop&q=60",
+        description: "Paneer gravy, Dal Makhani, 3 Chapatis, Rice, & Salad.",
+        customizable: false
+      },
+      {
+        id: 3,
+        name: "Crispy Masala Dosa",
+        category: "south-indian",
+        price: 80,
+        rating: 4.6,
+        reviews: 95,
+        isVeg: true,
+        image: "https://images.unsplash.com/photo-1668236543090-82eba5ee5976?w=500&auto=format&fit=crop&q=60",
+        description: "Golden rice crepe stuffed with potato masala. Served with Sambhar & Coconut Chutney.",
+        customizable: true
+      },
+      {
+        id: 4,
+        name: "Idli Sambhar (2 Pcs)",
+        category: "south-indian",
+        price: 50,
+        rating: 4.4,
+        reviews: 64,
+        isVeg: true,
+        image: "https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=500&auto=format&fit=crop&q=60",
+        description: "Steamed fluffy rice cakes with piping hot lentil Sambhar.",
+        customizable: false
+      },
+      {
+        id: 5,
+        name: "Classic Samosa (2 Pcs)",
+        category: "snacks",
+        price: 30,
+        rating: 4.7,
+        reviews: 320,
+        isVeg: true,
+        image: "https://images.unsplash.com/photo-1601050690597-df0568f70950?w=500&auto=format&fit=crop&q=60",
+        description: "Crispy pastry stuffed with spicy potato mixture & mint-tamarind chutney.",
+        customizable: false
+      },
+      {
+        id: 6,
+        name: "GNDEC Special Veg Cheese Burger",
+        category: "fast-food",
+        price: 60,
+        rating: 4.5,
+        reviews: 180,
+        isVeg: true,
+        image: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500&auto=format&fit=crop&q=60",
+        description: "Crispy vegetable patty topped with cheese slice, mayonnaise, and fresh veggies.",
+        customizable: true
+      },
+      {
+        id: 7,
+        name: "Chilli Paneer Dry / Gravy",
+        category: "fast-food",
+        price: 110,
+        rating: 4.7,
+        reviews: 88,
+        isVeg: true,
+        image: "https://images.unsplash.com/photo-1567188040759-fb8a883dc6d8?w=500&auto=format&fit=crop&q=60",
+        description: "Indo-Chinese style tossed cottage cheese cubes with bell peppers.",
+        customizable: true
+      },
+      {
+        id: 8,
+        name: "Chana Bhatura (2 Pcs)",
+        category: "north-indian",
+        price: 90,
+        rating: 4.9,
+        reviews: 290,
+        isVeg: true,
+        image: "https://images.unsplash.com/photo-1626132647523-66f5bf380027?w=500&auto=format&fit=crop&q=60",
+        description: "Spicy chickpea curry served with deep fried puffed bread.",
+        customizable: false
+      },
+      {
+        id: 9,
+        name: "Cold Coffee with Ice Cream",
+        category: "beverages",
+        price: 55,
+        rating: 4.8,
+        reviews: 175,
+        isVeg: true,
+        image: "https://images.unsplash.com/photo-1517701604599-bb29b565090c?w=500&auto=format&fit=crop&q=60",
+        description: "Rich blended chocolate-coffee crowned with vanilla scoop.",
+        customizable: true
+      },
+      {
+        id: 10,
+        name: "Special Masala Chai",
+        category: "beverages",
+        price: 20,
+        rating: 4.9,
+        reviews: 410,
+        isVeg: true,
+        image: "https://images.unsplash.com/photo-1576092768241-dec231879fc3?w=500&auto=format&fit=crop&q=60",
+        description: "Authentic ginger and cardamom spiced milk tea.",
+        customizable: false
+      },
+      {
+        id: 11,
+        name: "Fresh Veg Grilled Sandwich",
+        category: "snacks",
+        price: 50,
+        rating: 4.3,
+        reviews: 90,
+        isVeg: true,
+        image: "https://images.unsplash.com/photo-1528735602780-2552fd46c7af?w=500&auto=format&fit=crop&q=60",
+        description: "Toasted multi-grain bread loaded with cucumber, tomato, and mint chutney.",
+        customizable: true
+      },
+      {
+        id: 12,
+        name: "Chocolate Brownie Fudge",
+        category: "bakery",
+        price: 65,
+        rating: 4.9,
+        reviews: 115,
+        isVeg: true,
+        image: "https://images.unsplash.com/photo-1606313564200-e75d5e30476c?w=500&auto=format&fit=crop&q=60",
+        description: "Freshly baked gooey dark chocolate brownie from the PG Block bakery.",
+        customizable: false
+      }
+    ];
+
+    // Categories definition
+    const categories = [
+      { id: 'all', label: 'All Items', icon: 'fa-table-cells' },
+      { id: 'north-indian', label: 'North Indian & Thali', icon: 'fa-bowl-food' },
+      { id: 'fast-food', label: 'Fast Food', icon: 'fa-burger' },
+      { id: 'south-indian', label: 'South Indian', icon: 'fa-egg' },
+      { id: 'snacks', label: 'Snacks & Bites', icon: 'fa-cookie' },
+      { id: 'beverages', label: 'Beverages & Tea', icon: 'fa-mug-hot' },
+      { id: 'bakery', label: 'Bakery & Dessert', icon: 'fa-cake-candles' }
+    ];
+
+    // App State Variables
+    let currentCategory = 'all';
+    let searchQuery = '';
+    let cart = [];
+    let activeOrder = null;
+    let orderProgressStep = 1;
+    let pendingCustomItem = null;
+
+    // Initialization
+    window.onload = function() {
+      renderCategoryTabs();
+      renderMenuGrid();
+      updateCartUI();
+    };
+
+    // Render Category Tabs
+    function renderCategoryTabs() {
+      const tabsContainer = document.getElementById('categoryTabs');
+      tabsContainer.innerHTML = categories.map(cat => {
+        const isActive = cat.id === currentCategory;
+        const activeClass = isActive 
+          ? 'bg-gndec-navy text-white shadow-md border-gndec-gold' 
+          : 'bg-white text-slate-700 hover:bg-slate-100 border-slate-200';
+        
+        return `
+          <button 
+            onclick="filterCategory('${cat.id}')"
+            class="px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all border flex items-center gap-2 ${activeClass}"
+          >
+            <i class="fa-solid ${cat.icon} ${isActive ? 'text-gndec-gold' : 'text-slate-500'}"></i>
+            ${cat.label}
+          </button>
+        `;
+      }).join('');
+    }
+
+    // Filter Items by Category
+    function filterCategory(catId) {
+      currentCategory = catId;
+      renderCategoryTabs();
+      renderMenuGrid();
+    }
+
+    // Handle Search Input
+    function handleSearch() {
+      const input = document.getElementById('searchInput');
+      searchQuery = input.value.toLowerCase().trim();
+      
+      const clearBtn = document.getElementById('clearSearch');
+      if (searchQuery.length > 0) {
+        clearBtn.classList.remove('hidden');
+      } else {
+        clearBtn.classList.add('hidden');
+      }
+      renderMenuGrid();
+    }
+
+    function clearSearchInput() {
+      document.getElementById('searchInput').value = '';
+      searchQuery = '';
+      document.getElementById('clearSearch').classList.add('hidden');
+      renderMenuGrid();
+    }
+
+    function resetFilters() {
+      currentCategory = 'all';
+      clearSearchInput();
+    }
+
+    // Render Menu Items Cards Grid
+    function renderMenuGrid() {
+      const grid = document.getElementById('menuGrid');
+      const emptyState = document.getElementById('emptyMenuState');
+      const countDisplay = document.getElementById('itemCountDisplay');
+
+      // Filter Logic
+      const filtered = menuItems.filter(item => {
+        const matchesCategory = (currentCategory === 'all') || (item.category === currentCategory);
+        const matchesSearch = item.name.toLowerCase().includes(searchQuery) || item.description.toLowerCase().includes(searchQuery);
+        return matchesCategory && matchesSearch;
+      });
+
+      countDisplay.textContent = `Showing ${filtered.length} items`;
+
+      if (filtered.length === 0) {
+        grid.innerHTML = '';
+        emptyState.classList.remove('hidden');
+        return;
+      } else {
+        emptyState.classList.add('hidden');
+      }
+
+      grid.innerHTML = filtered.map(item => {
+        // Fallback placeholder image handler
+        const fallbackImg = "https://placehold.co/400x300/002147/DAA520?text=GNDEC+Canteen";
+
+        return `
+          <div class="bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden border border-slate-100 flex flex-col justify-between group">
+            
+            <div>
+              <!-- Image Container with Veg Indicator Badge -->
+              <div class="relative h-44 overflow-hidden bg-slate-100">
+                <img 
+                  src="${item.image}" 
+                  alt="${item.name}" 
+                  onerror="this.onerror=null;this.src='${fallbackImg}';"
+                  class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                />
+                
+                <!-- Veg Tag -->
+                <div class="absolute top-3 left-3 bg-white/90 backdrop-blur-md px-2 py-1 rounded-md shadow-sm flex items-center gap-1.5">
+                  <div class="${item.isVeg ? 'badge-veg' : 'badge-nonveg'} w-3 h-3 flex items-center justify-center p-[1px]">
+                    <div class="${item.isVeg ? 'badge-veg-inner' : 'badge-nonveg-inner'} w-full h-full rounded-full"></div>
+                  </div>
+                  <span class="text-[10px] font-bold tracking-wider uppercase text-slate-700">${item.isVeg ? 'Veg' : 'Non-Veg'}</span>
+                </div>
+
+                <!-- Rating Tag -->
+                <div class="absolute top-3 right-3 bg-gndec-navy/90 text-white backdrop-blur-md text-xs font-bold px-2 py-1 rounded-md shadow-sm flex items-center gap-1">
+                  <i class="fa-solid fa-star text-gndec-gold text-[10px]"></i>
+                  <span>${item.rating}</span>
+                </div>
+              </div>
+
+              <!-- Content Section -->
+              <div class="p-4">
+                <h4 class="font-bold text-slate-800 text-sm group-hover:text-gndec-navy transition-colors">${item.name}</h4>
+                <p class="text-slate-500 text-xs mt-1 line-clamp-2 leading-relaxed">${item.description}</p>
+              </div>
+            </div>
+
+            <!-- Price & Action Footer -->
+            <div class="p-4 pt-0 flex items-center justify-between border-t border-slate-50 mt-2">
+              <div>
+                <span class="text-xs text-slate-400 block font-medium">Price</span>
+                <span class="text-base font-extrabold text-gndec-navy">₹${item.price}</span>
+              </div>
+
+              <div>
+                ${item.customizable ? `
+                  <button 
+                    onclick="openCustomModal(${item.id})"
+                    class="bg-gndec-gold/20 hover:bg-gndec-gold text-gndec-navy hover:text-white border border-gndec-gold px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1"
+                  >
+                    <span>Customize</span> <i class="fa-solid fa-sliders text-[10px]"></i>
+                  </button>
+                ` : `
+                  <button 
+                    onclick="addToCart(${item.id})"
+                    class="bg-gndec-navy hover:bg-gndec-navyDark text-white px-3 py-1.5 rounded-xl text-xs font-bold transition-all shadow hover:scale-105 active:scale-95 flex items-center gap-1"
+                  >
+                    <i class="fa-solid fa-plus text-[10px]"></i> Add
+                  </button>
+                `}
+              </div>
+            </div>
+
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Cart Management Logic
+    function addToCart(itemId, customDetails = null) {
+      const item = menuItems.find(i => i.id === itemId);
+      if (!item) return;
+
+      const cartKey = customDetails 
+        ? `${item.id}-${customDetails.spice}-${customDetails.addons.join(',')}` 
+        : `${item.id}-default`;
+
+      const existingIndex = cart.findIndex(c => c.key === cartKey);
+
+      let price = item.price;
+      if (customDetails && customDetails.extraCost) {
+        price += customDetails.extraCost;
+      }
+
+      if (existingIndex > -1) {
+        cart[existingIndex].quantity += 1;
+      } else {
+        cart.push({
+          key: cartKey,
+          id: item.id,
+          name: item.name,
+          basePrice: item.price,
+          finalPrice: price,
+          customDetails: customDetails,
+          quantity: 1
+        });
+      }
+
+      updateCartUI();
+      showToast(`Added ${item.name} to cart!`);
+    }
+
+    function updateQuantity(key, delta) {
+      const index = cart.findIndex(c => c.key === key);
+      if (index > -1) {
+        cart[index].quantity += delta;
+        if (cart[index].quantity <= 0) {
+          cart.splice(index, 1);
+        }
+      }
+      updateCartUI();
+    }
+
+    function updateCartUI() {
+      const cartBadge = document.getElementById('cartBadge');
+      const cartHeaderTotal = document.getElementById('cartHeaderTotal');
+      const cartItemCountBadge = document.getElementById('cartItemCountBadge');
+      const cartItemsList = document.getElementById('cartItemsList');
+      const emptyCartView = document.getElementById('emptyCartView');
+      const cartFooter = document.getElementById('cartFooter');
+
+      const totalItemsCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+      const subtotal = cart.reduce((sum, item) => sum + (item.finalPrice * item.quantity), 0);
+      const tax = Math.round(subtotal * 0.05); // 5% GST / Campus Digital Fee
+      const grandTotal = subtotal + tax;
+
+      // Header Badges
+      cartHeaderTotal.textContent = `₹${grandTotal}`;
+      if (totalItemsCount > 0) {
+        cartBadge.textContent = totalItemsCount;
+        cartBadge.classList.remove('hidden');
+        cartItemCountBadge.textContent = `${totalItemsCount} items`;
+      } else {
+        cartBadge.classList.add('hidden');
+        cartItemCountBadge.textContent = `0 items`;
+      }
+
+      // Populate Items list inside drawer
+      if (cart.length === 0) {
+        cartItemsList.innerHTML = '';
+        cartItemsList.classList.add('hidden');
+        emptyCartView.classList.remove('hidden');
+        cartFooter.classList.add('hidden');
+      } else {
+        cartItemsList.classList.remove('hidden');
+        emptyCartView.classList.add('hidden');
+        cartFooter.classList.remove('hidden');
+
+        cartItemsList.innerHTML = cart.map(item => `
+          <div class="bg-slate-50 rounded-xl p-3 border border-slate-200 flex justify-between items-center gap-3">
+            <div class="flex-1">
+              <h5 class="font-bold text-slate-800 text-xs">${item.name}</h5>
+              ${item.customDetails ? `
+                <p class="text-[10px] text-slate-500 mt-0.5">
+                  Options: ${item.customDetails.spice} ${item.customDetails.addons.length > 0 ? '| ' + item.customDetails.addons.join(', ') : ''}
+                </p>
+              ` : ''}
+              <span class="text-xs font-extrabold text-gndec-navy mt-1 block">₹${item.finalPrice} × ${item.quantity} = ₹${item.finalPrice * item.quantity}</span>
+            </div>
+
+            <!-- Quantity Counter -->
+            <div class="flex items-center gap-2 bg-white rounded-lg border border-slate-300 p-1 shadow-sm">
+              <button onclick="updateQuantity('${item.key}', -1)" class="w-6 h-6 bg-slate-100 hover:bg-slate-200 rounded text-slate-700 font-bold text-xs flex items-center justify-center">
+                -
+              </button>
+              <span class="text-xs font-bold text-slate-800 w-4 text-center">${item.quantity}</span>
+              <button onclick="updateQuantity('${item.key}', 1)" class="w-6 h-6 bg-gndec-navy hover:bg-gndec-navyDark text-white rounded font-bold text-xs flex items-center justify-center">
+                +
+              </button>
+            </div>
+          </div>
+        `).join('');
+
+        document.getElementById('summarySubtotal').textContent = `₹${subtotal}`;
+        document.getElementById('summaryTax').textContent = `₹${tax}`;
+        document.getElementById('summaryGrandTotal').textContent = `₹${grandTotal}`;
+      }
+    }
+
+    function toggleCartModal(show) {
+      const drawer = document.getElementById('cartDrawer');
+      if (show) {
+        drawer.classList.remove('hidden');
+      } else {
+        drawer.classList.add('hidden');
+      }
+    }
+
+    // Customization Modal Logic
+    function openCustomModal(itemId) {
+      const item = menuItems.find(i => i.id === itemId);
+      if (!item) return;
+
+      pendingCustomItem = item;
+      document.getElementById('modalItemTitle').textContent = `Customize ${item.name}`;
+      document.getElementById('extraCheeseCheck').checked = false;
+      document.getElementById('extraButterCheck').checked = false;
+      document.getElementById('modalCustomNote').value = '';
+
+      const modalAddBtn = document.getElementById('modalAddBtn');
+      modalAddBtn.onclick = function() {
+        submitCustomization();
+      };
+
+      document.getElementById('customModal').classList.remove('hidden');
+    }
+
+    function closeCustomModal() {
+      document.getElementById('customModal').classList.add('hidden');
+      pendingCustomItem = null;
+    }
+
+    function submitCustomization() {
+      if (!pendingCustomItem) return;
+
+      const spice = document.querySelector('input[name="spiceOption"]:checked').value;
+      const extraCheese = document.getElementById('extraCheeseCheck').checked;
+      const extraButter = document.getElementById('extraButterCheck').checked;
+
+      let extraCost = 0;
+      let addons = [];
+
+      if (extraCheese) {
+        extraCost += 15;
+        addons.push('Extra Cheese (+₹15)');
+      }
+      if (extraButter) {
+        extraCost += 10;
+        addons.push('Extra Butter (+₹10)');
+      }
+
+      const customDetails = {
+        spice: spice,
+        addons: addons,
+        extraCost: extraCost
+      };
+
+      addToCart(pendingCustomItem.id, customDetails);
+      closeCustomModal();
+    }
+
+    // Place Order Logic & Simulation
+    function placeOrder() {
+      if (cart.length === 0) return;
+
+      const tokenNum = Math.floor(1000 + Math.random() * 9000);
+      const counter = document.getElementById('pickupCounter').value;
+      const slot = document.getElementById('pickupTimeSlot').value;
+      const subtotal = cart.reduce((sum, item) => sum + (item.finalPrice * item.quantity), 0);
+      const tax = Math.round(subtotal * 0.05);
+      const grandTotal = subtotal + tax;
+
+      activeOrder = {
+        token: tokenNum,
+        counter: counter,
+        slot: slot,
+        total: grandTotal,
+        items: [...cart]
+      };
+
+      // Reset Cart
+      cart = [];
+      updateCartUI();
+      toggleCartModal(false);
+
+      // Show Active Order Tracker Header Button
+      document.getElementById('activeTokenDisplay').textContent = tokenNum;
+      document.getElementById('activeOrderBtn').classList.remove('hidden');
+
+      // Setup Order Tracker Modal
+      orderProgressStep = 1;
+      updateTrackerDisplay();
+      openOrderStatusModal();
+    }
+
+    function openOrderStatusModal() {
+      if (!activeOrder) return;
+      document.getElementById('orderStatusModal').classList.remove('hidden');
+    }
+
+    function closeOrderStatusModal() {
+      document.getElementById('orderStatusModal').classList.add('hidden');
+    }
+
+    function updateTrackerDisplay() {
+      if (!activeOrder) return;
+
+      document.getElementById('tokenNumberDisplay').textContent = `#${activeOrder.token}`;
+      document.getElementById('trackerLocation').textContent = activeOrder.counter;
+      document.getElementById('trackerTimeSlot').textContent = activeOrder.slot;
+      document.getElementById('trackerAmount').textContent = `₹${activeOrder.total}`;
+
+      const progressBar = document.getElementById('orderProgressBar');
+      const stageTitle = document.getElementById('statusStageTitle');
+      const eta = document.getElementById('statusETA');
+
+      if (orderProgressStep === 1) {
+        progressBar.style.width = '33%';
+        stageTitle.textContent = 'Step 1: Token Sent to Kitchen Counter';
+        eta.textContent = 'Est: 8-10 mins';
+      } else if (orderProgressStep === 2) {
+        progressBar.style.width = '66%';
+        stageTitle.textContent = 'Step 2: Chef is Preparing Your Meal 🔥';
+        eta.textContent = 'Est: 3-5 mins';
+      } else if (orderProgressStep === 3) {
+        progressBar.style.width = '100%';
+        stageTitle.textContent = 'Step 3: Ready for Pickup! 🔔';
+        eta.textContent = 'Pick up Now!';
+      }
+    }
+
+    function simulateOrderProgress() {
+      if (!activeOrder) return;
+      if (orderProgressStep < 3) {
+        orderProgressStep++;
+        updateTrackerDisplay();
+        showToast(`Order status updated to Step ${orderProgressStep}`);
+      } else {
+        showToast("Order completed & collected!");
+      }
+    }
+
+    // Toast Notification System
+    function showToast(message) {
+      const toast = document.getElementById('toast');
+      const toastMsg = document.getElementById('toastMsg');
+      
+      toastMsg.textContent = message;
+      toast.classList.remove('translate-y-20', 'opacity-0');
+      toast.classList.add('translate-y-0', 'opacity-100');
+
+      setTimeout(() => {
+        toast.classList.remove('translate-y-0', 'opacity-100');
+        toast.classList.add('translate-y-20', 'opacity-0');
+      }, 3000);
+    }
+  </script>
+</body>
+</html>
